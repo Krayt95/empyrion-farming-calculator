@@ -1,6 +1,6 @@
 import math
 from pathlib import Path
-from typing import Dict, Text, Tuple, Type
+from typing import Dict, List, Text, Tuple, Type
 
 from pydantic import BaseModel
 from pydantic.types import NonNegativeInt, PositiveInt
@@ -57,20 +57,23 @@ streamlit.header(
     SCENARIO_VERSION_SELECTION_COLUMN
 ) = streamlit.columns(2)
 
-SCENARIO_OPTIONS = [
-    (
-        scenario_directory_path.name,
-        scenario_directory_path
-    )
-    for scenario_directory_path in DATA_PATH.iterdir()
-    if scenario_directory_path.is_dir() and len(
-        list(
-            scenario_directory_path.glob(
-                f"{SCENARIO_VERSION_GLOB_PATTERN}/{SCENARIO_CONFIG_NAME}"
+SCENARIO_OPTIONS: List[Tuple[Text, Path]] = sorted(
+    [
+        (
+            scenario_directory_path.name,
+            scenario_directory_path
+        )
+        for scenario_directory_path in DATA_PATH.iterdir()
+        if scenario_directory_path.is_dir() and len(
+            list(
+                scenario_directory_path.glob(
+                    f"{SCENARIO_VERSION_GLOB_PATTERN}/{SCENARIO_CONFIG_NAME}"
+                )
             )
         )
-    )
-]
+    ],
+    key=lambda option: option[0]
+)
 
 def format_file_name_path_tuple_for_select(
         option: Tuple[Text, Path]
@@ -95,18 +98,21 @@ with SCENARIO_SELECTION_COLUMN:
 ) = SELECTED_SCENARIO
 
 if not SELECTED_SCENARIO_PATH is None:
-    SCENARIO_VERSION_OPTIONS = [
-        (
-            scenario_version_path.name,
-            scenario_version_path
-        )
-        for scenario_version_path in SELECTED_SCENARIO_PATH.glob(
-            f"{SCENARIO_VERSION_GLOB_PATTERN}"
-        )
-        if scenario_version_path.is_dir() and (
-            scenario_version_path / SCENARIO_CONFIG_NAME
-        ).exists()
-    ]
+    SCENARIO_VERSION_OPTIONS: List[Tuple[Text, Path]] = sorted(
+        [
+            (
+                scenario_version_path.name,
+                scenario_version_path
+            )
+            for scenario_version_path in SELECTED_SCENARIO_PATH.glob(
+                f"{SCENARIO_VERSION_GLOB_PATTERN}"
+            )
+            if scenario_version_path.is_dir() and (
+                scenario_version_path / SCENARIO_CONFIG_NAME
+            ).exists()
+        ],
+        key=lambda option: option[0]
+    )
 else:
     SCENARIO_VERSION_OPTIONS = []
 
@@ -279,17 +285,32 @@ for (
 
 streamlit.subheader("Produce Harvest Products per Harvest")
 
-for harvest_product_name, harvest_product in HARVEST_PRODUCTS.items():
-    HARVEST_PRODUCT_PRODUCTION_COUNTS[
-            harvest_product_name
-    ] = streamlit.number_input(
-        harvest_product_name,
-        min_value=HARVEST_PRODUCT_PRODUCTION_COUNTS[harvest_product_name],
-        step=1,
-        value=HARVEST_PRODUCT_PRODUCTION_COUNTS[harvest_product_name],
-        key=f"Harvest Product {harvest_product_name} Count",
-        help="TODO"  # TODO help
-    )
+for batch_index in range(0, len(HARVEST_PRODUCTS), COLUMN_BATCH_SIZE):
+    harvest_product_batch = list(
+        HARVEST_PRODUCTS.items()
+    )[batch_index:(batch_index + COLUMN_BATCH_SIZE)]
+
+    harvest_product_batch_columns = streamlit.columns(COLUMN_BATCH_SIZE)
+
+    for column_index, (
+            harvest_product_name,
+            harvest_product
+    ) in enumerate(harvest_product_batch):
+        with harvest_product_batch_columns[column_index]:
+            HARVEST_PRODUCT_PRODUCTION_COUNTS[
+                    harvest_product_name
+            ] = streamlit.number_input(
+                harvest_product_name,
+                min_value=int(
+                    HARVEST_PRODUCT_PRODUCTION_COUNTS[harvest_product_name]
+                ),
+                step=1,
+                value=int(
+                    HARVEST_PRODUCT_PRODUCTION_COUNTS[harvest_product_name]
+                ),
+                key=f"Harvest Product {harvest_product_name} Count",
+                help="TODO"  # TODO help
+            )
 
 streamlit.header("Production Results per Harvest")
 
@@ -348,8 +369,6 @@ for (
         ) / (
             best_plant_sprout.harvest_yield / best_plant_sprout.growth_time
         )
-
-        streamlit.write(best_plant_sprout.name, best_plant_sprout_count)
 
         PLANT_SPROUTS_COUNTS[best_plant_sprout.name] = math.ceil(
             best_plant_sprout_count
