@@ -1,7 +1,9 @@
+import math
 from pathlib import Path
 from typing import Dict, Text, Tuple, Type
 
 from pydantic import BaseModel
+from pydantic.types import NonNegativeInt, PositiveInt
 import srsly
 import streamlit
 
@@ -221,6 +223,133 @@ with streamlit.spinner("Loading data"):
 
     # TODO: Food Items
 
-    streamlit.write(
-        SCENARIO_CONFIG.dict()
+HARVEST_INTERVAL: PositiveInt = streamlit.slider(
+    "Harvest Interval (in Minutes)",
+    min_value=10,
+    max_value=180,
+    step=10,
+    value=60,
+    help="TODO"  # TODO help
+)
+
+streamlit.subheader("Produce Food Items per Harvest")
+
+FOOD_ITEM_PRODUCTION_COUNTS: Dict[Text, NonNegativeInt] = dict()
+
+for food_item_name, food_item in FOOD_ITEMS.items():
+    FOOD_ITEM_PRODUCTION_COUNTS[food_item_name] = streamlit.number_input(
+        food_item_name,
+        min_value=0,
+        step=1,
+        key=f"Food Item {food_item_name} Count",
+        help="TODO"  # TODO help
     )
+
+HARVEST_PRODUCT_PRODUCTION_COUNTS: Dict[Text, NonNegativeInt] = {
+    harvest_product_name: 0
+    for harvest_product_name in HARVEST_PRODUCTS
+}
+
+for (
+        food_item_name,
+        food_item_count
+) in FOOD_ITEM_PRODUCTION_COUNTS.items():
+    for (
+            harvest_product_name,
+            harvest_product_count
+    ) in FOOD_ITEMS[food_item_name].harvest_products.items():
+        HARVEST_PRODUCT_PRODUCTION_COUNTS[harvest_product_name] += (
+            food_item_count * harvest_product_count
+        )
+
+streamlit.subheader("Produce Harvest Products per Harvest")
+
+for harvest_product_name, harvest_product in HARVEST_PRODUCTS.items():
+    HARVEST_PRODUCT_PRODUCTION_COUNTS[
+            harvest_product_name
+    ] = streamlit.number_input(
+        harvest_product_name,
+        min_value=HARVEST_PRODUCT_PRODUCTION_COUNTS[harvest_product_name],
+        step=1,
+        value=HARVEST_PRODUCT_PRODUCTION_COUNTS[harvest_product_name],
+        key=f"Harvest Product {harvest_product_name} Count",
+        help="TODO"  # TODO help
+    )
+
+streamlit.header("Production Results per Harvest")
+
+(
+    REQUIRED_FOOD_ITEMS_COLUMN,
+    REQUIRED_HARVEST_PRODUCTS_COLUMN,
+    RECOMMENDED_PLANT_SPROUTS_COLUMN,
+    ACTUAL_HARVEST_PRODUCTS_COLUMN
+) = streamlit.columns(4)
+
+with REQUIRED_FOOD_ITEMS_COLUMN:
+    streamlit.write(FOOD_ITEM_PRODUCTION_COUNTS)
+
+with REQUIRED_HARVEST_PRODUCTS_COLUMN:
+    streamlit.write(HARVEST_PRODUCT_PRODUCTION_COUNTS)
+
+PLANT_SPROUTS_COUNTS: Dict[Text, NonNegativeInt] = {
+    plant_sprout_name: 0
+    for plant_sprout_name in PLANT_SPROUTS
+}
+
+ACTUAL_HARVEST_PRODUCTS_COUNT: Dict[Text, NonNegativeInt] = {
+    harvest_product_name: 0
+    for harvest_product_name in HARVEST_PRODUCTS
+}
+
+for (
+        harvest_product_name,
+        harvest_product_count
+) in HARVEST_PRODUCT_PRODUCTION_COUNTS.items():
+    if harvest_product_count > 0:
+        harvest_product = HARVEST_PRODUCTS[harvest_product_name]
+
+        plant_sprouts = sorted(
+            [
+                PLANT_SPROUTS[plant_sprout_name]
+                for (
+                        plant_sprout_name,
+                        growth_time
+                ) in harvest_product.harvest_growth_times.items()
+                if growth_time <= HARVEST_INTERVAL
+            ],
+            key=lambda plant_sprout: plant_sprout.harvest_yield_per_hour,
+            reverse=True
+        )
+
+        best_plant_sprout: PlantSprout
+
+        if len(plant_sprouts) == 0:
+            best_plant_sprout, *_ = harvest_product.plant_sprouts.values()
+        else:
+            best_plant_sprout, *_ = plant_sprouts
+
+        best_plant_sprout_count: PositiveInt = (
+            harvest_product_count / HARVEST_INTERVAL
+        ) / (
+            best_plant_sprout.harvest_yield / best_plant_sprout.growth_time
+        )
+
+        PLANT_SPROUTS_COUNTS[best_plant_sprout.name] = math.ceil(
+            best_plant_sprout_count
+        )
+
+for (
+        plant_sprout_name,
+        plant_sprout_count
+) in PLANT_SPROUTS_COUNTS.items():
+    plant_sprout = PLANT_SPROUTS[plant_sprout_name]
+
+    ACTUAL_HARVEST_PRODUCTS_COUNT[plant_sprout.harvest_type] = (
+        plant_sprout.harvest_yield / plant_sprout.growth_time
+    ) * HARVEST_INTERVAL * plant_sprout_count
+
+with RECOMMENDED_PLANT_SPROUTS_COLUMN:
+    streamlit.write(PLANT_SPROUTS_COUNTS)
+
+with ACTUAL_HARVEST_PRODUCTS_COLUMN:
+    streamlit.write(ACTUAL_HARVEST_PRODUCTS_COUNT)  # TODO: fix
