@@ -86,8 +86,7 @@ with SCENARIO_SELECTION_COLUMN:
     SELECTED_SCENARIO = streamlit.selectbox(
         "Select a Scenario",
         options=[
-            *SCENARIO_OPTIONS,
-            # TODO: ("Custom", None)
+            *SCENARIO_OPTIONS
         ],
         format_func=format_file_name_path_tuple_for_select
     )
@@ -120,8 +119,7 @@ with SCENARIO_VERSION_SELECTION_COLUMN:
     SELECTED_SCENARIO_VERSION = streamlit.selectbox(
         "Select the Scenario Version",
         options=[
-            *SCENARIO_VERSION_OPTIONS,
-            # TODO: ("Custom", None)
+            *SCENARIO_VERSION_OPTIONS
         ],
         format_func=format_file_name_path_tuple_for_select
     )
@@ -236,7 +234,13 @@ HARVEST_INTERVAL: PositiveInt = streamlit.slider(
     max_value=180,
     step=10,
     value=60,
-    help="TODO"  # TODO help
+    help=(
+        "**Harvest Interval** (in minutes)\n\n"
+        "How often you intend to check on the plants for harvesting.\n\n"
+        "Will filter out plants with a longer growth time, unless there "
+        "are no alternatives for the harvest product.\n\n"
+        "Used in calculating actual harvest product output."
+    )
 )
 
 streamlit.subheader("Produce Food Items per Harvest")
@@ -262,7 +266,24 @@ for batch_index in range(0, len(FOOD_ITEMS), COLUMN_BATCH_SIZE):
                 min_value=0,
                 step=1,
                 key=f"Food Item {food_item_name} Count",
-                help="TODO"  # TODO help
+                help=(
+                    "\n".join(
+                        [
+                            f"**{food_item.name}**\n",
+                            f"Ingredients: \n",
+                            *[
+                                (
+                                    f"* `{food_item_ingredient_count}` x "
+                                    f"{food_item_ingredient}"
+                                )
+                                for (
+                                    food_item_ingredient,
+                                    food_item_ingredient_count
+                                ) in food_item.ingredients.items()
+                            ]
+                        ]
+                    )
+                )
             )
 
 HARVEST_PRODUCT_PRODUCTION_COUNTS: Dict[Text, NonNegativeInt] = {
@@ -309,7 +330,32 @@ for batch_index in range(0, len(HARVEST_PRODUCTS), COLUMN_BATCH_SIZE):
                     HARVEST_PRODUCT_PRODUCTION_COUNTS[harvest_product_name]
                 ),
                 key=f"Harvest Product {harvest_product_name} Count",
-                help="TODO"  # TODO help
+                help=(
+                    "\n".join(
+                        [
+                            f"**{harvest_product.name}**\n",
+                            f"Sprouts Yield: \n",
+                            *[
+                                (
+                                    f"* {plant_sprout_name}: "
+                                    f"`{plant_sprout_yield}` / "
+                                    f"""
+                                     `{PLANT_SPROUTS[
+                                         plant_sprout_name
+                                     ].growth_time}` min
+                                     = `{PLANT_SPROUTS[
+                                         plant_sprout_name
+                                     ].harvest_yield_per_hour:.2f}` per hour
+                                    """
+                                )
+                                for (
+                                    plant_sprout_name,
+                                    plant_sprout_yield
+                                ) in harvest_product.harvest_quantities.items()
+                            ]
+                        ]
+                    )
+                )
             )
 
 streamlit.header("Production Results per Harvest")
