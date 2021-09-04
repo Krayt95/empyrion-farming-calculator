@@ -1,0 +1,113 @@
+# Vegetables Plants
+
+Large Eggplant:
+  Type: Vegetables  # Type produced
+  Growth Time: 31  # Time in Minutes
+  Yield: 1  # Amount to harvest
+
+Blue Pepper:
+  Type: Vegetables  # Type produced
+  Growth Time: 50  # Time in Minutes
+  Yield: 2  # Amount to harvest
+
+Tomato:
+  Type: Vegetables  # Type produced
+  Growth Time: 80  # Time in Minutes
+  Yield: 4  # Amount to harvest
+
+Pumpkin:
+  Type: Vegetables  # Type produced
+  Growth Time: 145  # Time in Minutes
+  Yield: 8  # Amount to harvest
+
+# Grain Plants
+
+Wheat:
+  Type: Grain  # Type produced
+  Growth Time: 40  # Time in Minutes
+  Yield: 6  # Amount to harvest
+
+Corn:
+  Type: Grain  # Type produced
+  Growth Time: 70  # Time in Minutes
+  Yield: 12  # Amount to harvest
+
+# Fruit Plants
+
+Pearthing:
+  Type: Fruit  # Type produced
+  Growth Time: 90  # Time in Minutes
+  Yield: 4  # Amount to harvest
+
+Space Orange:
+  Type: Fruit  # Type produced
+  Growth Time: 135  # Time in Minutes
+  Yield: 8  # Amount to harvest
+
+# Natural Stimulant Plants
+
+Space Kavae:
+  Type: Natural Stimulant  # Type produced
+  Growth Time: 33  # Time in Minutes
+  Yield: 2  # Amount to harvest
+
+Coffee Plant:
+  Type: Natural Stimulant  # Type produced
+  Growth Time: 91  # Time in Minutes
+  Yield: 6  # Amount to harvest
+
+# Herbal Leaves Plants
+
+Aloe Vera:
+  Type: Herbal Leaves  # Type produced
+  Growth Time: 40  # Time in Minutes
+  Yield: 1  # Amount to harvest
+
+# Plant Protein Plants
+
+Ahax Plant:
+  Type: Plant Protein  # Type produced
+  Growth Time: 90  # Time in Minutes
+  Yield: 5  # Amount to harvest
+
+# Berries Plants
+
+Akua Berry:
+  Type: Berries  # Type produced
+  Growth Time: 74  # Time in Minutes
+  Yield: 4  # Amount to harvest
+
+# Natural Sweetener Plants
+
+Alien Honey Plant:
+  Type: Natural Sweetener  # Type produced
+  Growth Time: 62  # Time in Minutes
+  Yield: 2  # Amount to harvest
+
+# Plant Fibers Plants
+
+Fiber Plant:
+  Type: Plant Fibers  # Type produced
+  Growth Time: 43  # Time in Minutes
+  Yield: 8  # Amount to harvest
+
+# Mushrooms Plants
+
+Mushrooms:
+  Type: Mushrooms  # Type produced
+  Growth Time: 110  # Time in Minutes
+  Yield: 4  # Amount to harvest
+
+# Spice Plants
+
+Spice:
+  Type: Spice  # Type produced
+  Growth Time: 50  # Time in Minutes
+  Yield: 3  # Amount to harvest
+
+# Buds Plants
+
+Big Alien Flower:
+  Type: Buds  # Type produced
+  Growth Time: 27  # Time in Minutes
+  Yield: 1  # Amount to harvest
