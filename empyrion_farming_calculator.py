@@ -41,6 +41,7 @@ PLANT_SPROUTS_CONFIG_NAME = "Plant-Sprouts.yaml"
 FOOD_ITEMS_CONFIG_NAME = "Food-Items.yaml"
 
 MINUTES_PER_HOUR = 60
+COLUMN_BATCH_SIZE = 3
 
 
 streamlit.info(
@@ -236,14 +237,27 @@ streamlit.subheader("Produce Food Items per Harvest")
 
 FOOD_ITEM_PRODUCTION_COUNTS: Dict[Text, NonNegativeInt] = dict()
 
-for food_item_name, food_item in FOOD_ITEMS.items():
-    FOOD_ITEM_PRODUCTION_COUNTS[food_item_name] = streamlit.number_input(
-        food_item_name,
-        min_value=0,
-        step=1,
-        key=f"Food Item {food_item_name} Count",
-        help="TODO"  # TODO help
-    )
+for batch_index in range(0, len(FOOD_ITEMS), COLUMN_BATCH_SIZE):
+    food_item_batch = list(
+        FOOD_ITEMS.items()
+    )[batch_index:(batch_index + COLUMN_BATCH_SIZE)]
+
+    food_item_batch_columns = streamlit.columns(COLUMN_BATCH_SIZE)
+
+    for column_index, (
+            food_item_name, food_item
+    ) in enumerate(food_item_batch):
+
+        with food_item_batch_columns[column_index]:
+            FOOD_ITEM_PRODUCTION_COUNTS[
+                    food_item_name
+            ] = streamlit.number_input(
+                food_item_name,
+                min_value=0,
+                step=1,
+                key=f"Food Item {food_item_name} Count",
+                help="TODO"  # TODO help
+            )
 
 HARVEST_PRODUCT_PRODUCTION_COUNTS: Dict[Text, NonNegativeInt] = {
     harvest_product_name: 0
@@ -257,10 +271,11 @@ for (
     for (
             harvest_product_name,
             harvest_product_count
-    ) in FOOD_ITEMS[food_item_name].harvest_products.items():
-        HARVEST_PRODUCT_PRODUCTION_COUNTS[harvest_product_name] += (
-            food_item_count * harvest_product_count
-        )
+    ) in FOOD_ITEMS[food_item_name].ingredients.items():
+        if harvest_product_name in HARVEST_PRODUCTS:
+            HARVEST_PRODUCT_PRODUCTION_COUNTS[harvest_product_name] += (
+                food_item_count * harvest_product_count
+            )
 
 streamlit.subheader("Produce Harvest Products per Harvest")
 
@@ -324,7 +339,7 @@ for (
         best_plant_sprout: PlantSprout
 
         if len(plant_sprouts) == 0:
-            best_plant_sprout, *_ = harvest_product.plant_sprouts.values()
+            best_plant_sprout, *_ = list(harvest_product.plant_sprouts.values())
         else:
             best_plant_sprout, *_ = plant_sprouts
 
@@ -333,6 +348,8 @@ for (
         ) / (
             best_plant_sprout.harvest_yield / best_plant_sprout.growth_time
         )
+
+        streamlit.write(best_plant_sprout.name, best_plant_sprout_count)
 
         PLANT_SPROUTS_COUNTS[best_plant_sprout.name] = math.ceil(
             best_plant_sprout_count
@@ -344,7 +361,7 @@ for (
 ) in PLANT_SPROUTS_COUNTS.items():
     plant_sprout = PLANT_SPROUTS[plant_sprout_name]
 
-    ACTUAL_HARVEST_PRODUCTS_COUNT[plant_sprout.harvest_type] = (
+    ACTUAL_HARVEST_PRODUCTS_COUNT[plant_sprout.harvest_type] += (
         plant_sprout.harvest_yield / plant_sprout.growth_time
     ) * HARVEST_INTERVAL * plant_sprout_count
 

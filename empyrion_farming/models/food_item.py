@@ -13,14 +13,14 @@ class FoodItem(BaseModel):
     average_market_value: PositiveInt
 
     ingredients: Dict[Text, PositiveInt]
-    ingredients_harvest_products: Optional[
+    harvest_products: Optional[
         Dict[Text, ForwardRef("models.HarvestProduct")]
     ] = None
 
     @root_validator(allow_reuse=True)
     def initialize_dicts(cls, values: Dict) -> Dict:
         for key in [
-                "ingredients_harvest_products"
+                "harvest_products"
         ]:
             if values[key] is None:
                 values[key] = dict()
