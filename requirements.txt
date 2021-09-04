@@ -1,0 +1,5 @@
+# Streamlit App
+streamlit ~= 0.88.0
+
+# Serialization / Deserialization
+srsly ~= 2.4.1
