@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "empyrion-farming-calculator"
+version = "0.1.0"
+description = "A _Streamlit_ app to calculate number of growing plots for farming in _Empyrion - Galactic Survival_ or _Reforged Eden_ mod"
+authors = ["Krayt"]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+streamlit = "^1.8.1"
+srsly = "^2.4.3"
+pydantic = "^1.9.0"
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
