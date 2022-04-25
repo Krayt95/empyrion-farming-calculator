@@ -5,7 +5,7 @@ description = "A _Streamlit_ app to calculate number of growing plots for farmin
 authors = ["Krayt"]
 
 [tool.poetry.dependencies]
-python = "^3.10"
+python = "^3.9"
 streamlit = "^1.8.1"
 srsly = "^2.4.3"
 pydantic = "^1.9.0"

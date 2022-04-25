@@ -48,7 +48,7 @@ class EmpyrionScenario(BaseModel):
             ).parent / value
 
             value = {
-                name: attributes | dict(name=name)
+                name: {**attributes, **dict(name=name)}
                 for name, attributes in srsly.read_yaml(
                     source_path
                 ).items()
@@ -78,9 +78,12 @@ class EmpyrionScenario(BaseModel):
     @classmethod
     def from_source_file(cls, source_path: Path) -> Self:
         return cls.parse_obj(
-            dict(
-                srsly.read_yaml(source_path)
-            ) | dict(
-                source_file=source_path
-            )
+            {
+                **dict(
+                    srsly.read_yaml(source_path)
+                ),
+                **dict(
+                    source_file=source_path
+                )
+            }
         )
