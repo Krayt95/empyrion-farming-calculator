@@ -36,9 +36,6 @@ streamlit.title(
 DATA_PATH = Path("./data")
 SCENARIO_VERSION_GLOB_PATTERN = "*-*.*"
 SCENARIO_CONFIG_NAME = "Scenario.yaml"
-HARVEST_PRODUCTS_CONFIG_NAME = "Harvest-Products.yaml"
-PLANT_SPROUTS_CONFIG_NAME = "Plant-Sprouts.yaml"
-FOOD_ITEMS_CONFIG_NAME = "Food-Items.yaml"
 
 MINUTES_PER_HOUR = 60
 COLUMN_BATCH_SIZE = 3
@@ -134,99 +131,14 @@ streamlit.header(
     "Farming Calculator"
 )
 
-def load_data_model(
-        class_type: Type[BaseModel],
-        yaml_path: Path
-) -> Dict[Text, BaseModel]:
-    return {
-        name: class_type.parse_obj(
-            {
-                "name": name,
-                **data
-            }
-        )
-        for name, data in srsly.read_yaml(
-            yaml_path
-        ).items()
-    }
-
 with streamlit.spinner("Loading data"):
-    SCENARIO_CONFIG: EmpyrionScenario = EmpyrionScenario.parse_obj(
-        srsly.read_yaml(SELECTED_SCENARIO_VERSION_PATH / SCENARIO_CONFIG_NAME)
+    SCENARIO: EmpyrionScenario = EmpyrionScenario.from_source_file(
+        SELECTED_SCENARIO_VERSION_PATH / SCENARIO_CONFIG_NAME
     )
-
-    HARVEST_PRODUCTS: Dict[Text, HarvestProduct] = load_data_model(
-        HarvestProduct,
-        SELECTED_SCENARIO_VERSION_PATH / HARVEST_PRODUCTS_CONFIG_NAME
-    )
-
-    SCENARIO_CONFIG.harvest_products = HARVEST_PRODUCTS
-
-    PLANT_SPROUTS: Dict[Text, PlantSprout] = load_data_model(
-        PlantSprout,
-        SELECTED_SCENARIO_VERSION_PATH / PLANT_SPROUTS_CONFIG_NAME
-    )
-
-    SCENARIO_CONFIG.plant_sprouts = PLANT_SPROUTS
-
-    FOOD_ITEMS: Dict[Text, FoodItem] = load_data_model(
-        FoodItem,
-        SELECTED_SCENARIO_VERSION_PATH / FOOD_ITEMS_CONFIG_NAME
-    )
-
-    SCENARIO_CONFIG.food_items = FOOD_ITEMS
-
-    for plant_sprout_name, plant_sprout in PLANT_SPROUTS.items():
-        if plant_sprout.harvest_yield_per_hour is None:
-            plant_sprout.harvest_yield_per_hour = (
-                plant_sprout.harvest_yield / (
-                    plant_sprout.growth_time / MINUTES_PER_HOUR
-                )
-            )
-
-        if not plant_sprout.harvest_type in HARVEST_PRODUCTS:
-            HARVEST_PRODUCTS[plant_sprout.harvest_type] = HarvestProduct(
-                name=plant_sprout.harvest_type
-            )
-
-        HARVEST_PRODUCTS[
-                plant_sprout.harvest_type
-        ].plant_sprouts[
-                plant_sprout_name
-        ] = plant_sprout
-
-        HARVEST_PRODUCTS[
-                plant_sprout.harvest_type
-        ].harvest_quantities[
-                plant_sprout_name
-        ] = plant_sprout.harvest_yield
-
-        HARVEST_PRODUCTS[
-                plant_sprout.harvest_type
-        ].harvest_growth_times[
-                plant_sprout_name
-        ] = plant_sprout.growth_time
-
-        HARVEST_PRODUCTS[
-                plant_sprout.harvest_type
-        ].harvest_quantities_per_hour[
-                plant_sprout_name
-        ] = plant_sprout.harvest_yield_per_hour
-
-        if HARVEST_PRODUCTS[
-                plant_sprout.harvest_type
-        ].average_market_value:
-            HARVEST_PRODUCTS[
-                    plant_sprout.harvest_type
-            ].average_market_values_per_hour[
-                    plant_sprout_name
-            ] = (
-                plant_sprout.harvest_yield_per_hour * HARVEST_PRODUCTS[
-                        plant_sprout.harvest_type
-                ].average_market_value
-            )
 
     # TODO: Food Items
+
+    streamlit.write(SCENARIO.dict())
 
 HARVEST_INTERVAL: PositiveInt = streamlit.slider(
     "Harvest Interval (in Minutes)",
@@ -247,9 +159,9 @@ streamlit.subheader("Produce Food Items per Harvest")
 
 FOOD_ITEM_PRODUCTION_COUNTS: Dict[Text, NonNegativeInt] = dict()
 
-for batch_index in range(0, len(FOOD_ITEMS), COLUMN_BATCH_SIZE):
+for batch_index in range(0, len(SCENARIO.food_items), COLUMN_BATCH_SIZE):
     food_item_batch = list(
-        FOOD_ITEMS.items()
+        SCENARIO.food_items.items()
     )[batch_index:(batch_index + COLUMN_BATCH_SIZE)]
 
     food_item_batch_columns = streamlit.columns(COLUMN_BATCH_SIZE)
@@ -288,7 +200,7 @@ for batch_index in range(0, len(FOOD_ITEMS), COLUMN_BATCH_SIZE):
 
 HARVEST_PRODUCT_PRODUCTION_COUNTS: Dict[Text, NonNegativeInt] = {
     harvest_product_name: 0
-    for harvest_product_name in HARVEST_PRODUCTS
+    for harvest_product_name in SCENARIO.harvest_products
 }
 
 for (
@@ -298,17 +210,17 @@ for (
     for (
             harvest_product_name,
             harvest_product_count
-    ) in FOOD_ITEMS[food_item_name].ingredients.items():
-        if harvest_product_name in HARVEST_PRODUCTS:
+    ) in SCENARIO.food_items[food_item_name].ingredients.items():
+        if harvest_product_name in SCENARIO.harvest_products:
             HARVEST_PRODUCT_PRODUCTION_COUNTS[harvest_product_name] += (
                 food_item_count * harvest_product_count
             )
 
 streamlit.subheader("Produce Harvest Products per Harvest")
 
-for batch_index in range(0, len(HARVEST_PRODUCTS), COLUMN_BATCH_SIZE):
+for batch_index in range(0, len(SCENARIO.harvest_products), COLUMN_BATCH_SIZE):
     harvest_product_batch = list(
-        HARVEST_PRODUCTS.items()
+        SCENARIO.harvest_products.items()
     )[batch_index:(batch_index + COLUMN_BATCH_SIZE)]
 
     harvest_product_batch_columns = streamlit.columns(COLUMN_BATCH_SIZE)
@@ -340,10 +252,10 @@ for batch_index in range(0, len(HARVEST_PRODUCTS), COLUMN_BATCH_SIZE):
                                     f"* {plant_sprout_name}: "
                                     f"`{plant_sprout_yield}` / "
                                     f"""
-                                     `{PLANT_SPROUTS[
+                                     `{SCENARIO.plant_sprouts[
                                          plant_sprout_name
                                      ].growth_time}` min
-                                     = `{PLANT_SPROUTS[
+                                     = `{SCENARIO.plant_sprouts[
                                          plant_sprout_name
                                      ].harvest_yield_per_hour:.2f}` per hour
                                     """
@@ -375,12 +287,12 @@ with REQUIRED_HARVEST_PRODUCTS_COLUMN:
 
 PLANT_SPROUTS_COUNTS: Dict[Text, NonNegativeInt] = {
     plant_sprout_name: 0
-    for plant_sprout_name in PLANT_SPROUTS
+    for plant_sprout_name in SCENARIO.plant_sprouts
 }
 
 ACTUAL_HARVEST_PRODUCTS_COUNT: Dict[Text, NonNegativeInt] = {
     harvest_product_name: 0
-    for harvest_product_name in HARVEST_PRODUCTS
+    for harvest_product_name in SCENARIO.harvest_products
 }
 
 for (
@@ -388,11 +300,11 @@ for (
         harvest_product_count
 ) in HARVEST_PRODUCT_PRODUCTION_COUNTS.items():
     if harvest_product_count > 0:
-        harvest_product = HARVEST_PRODUCTS[harvest_product_name]
+        harvest_product = SCENARIO.harvest_products[harvest_product_name]
 
         plant_sprouts = sorted(
             [
-                PLANT_SPROUTS[plant_sprout_name]
+                SCENARIO.plant_sprouts[plant_sprout_name]
                 for (
                         plant_sprout_name,
                         growth_time
@@ -424,9 +336,9 @@ for (
         plant_sprout_name,
         plant_sprout_count
 ) in PLANT_SPROUTS_COUNTS.items():
-    plant_sprout = PLANT_SPROUTS[plant_sprout_name]
+    plant_sprout = SCENARIO.plant_sprouts[plant_sprout_name]
 
-    ACTUAL_HARVEST_PRODUCTS_COUNT[plant_sprout.harvest_type] += (
+    ACTUAL_HARVEST_PRODUCTS_COUNT[plant_sprout.harvest_type.name] += (
         plant_sprout.harvest_yield / plant_sprout.growth_time
     ) * HARVEST_INTERVAL * plant_sprout_count
 

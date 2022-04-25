@@ -1,29 +1,30 @@
 from __future__ import annotations
 from typing import Dict, ForwardRef, Optional, Text
 
-from pydantic import BaseModel, root_validator
+from pydantic import root_validator, Field
 from pydantic.types import PositiveInt
 
-import empyrion_farming.models as models
+from .base_item import BaseItem
 
-class FoodItem(BaseModel):
+
+class FoodItem(BaseItem):
 
     name: Text
 
     average_market_value: PositiveInt
 
     ingredients: Dict[Text, PositiveInt]
-    harvest_products: Optional[
-        Dict[Text, ForwardRef("models.HarvestProduct")]
-    ] = None
+    harvest_products: Dict[Text, BaseItem] = Field(
+        default_factory=dict,
+        exclude=True
+    )
 
-    @root_validator(allow_reuse=True)
-    def initialize_dicts(cls, values: Dict) -> Dict:
-        for key in [
-                "harvest_products"
-        ]:
-            if values[key] is None:
-                values[key] = dict()
+    def update_references(self, values: Dict):
+        self.harvest_products = {
+            ingredient: values["harvest_products"][ingredient]
+            for ingredient in self.ingredients
+            if ingredient in values["harvest_products"]
+        }
 
-        return values
 
+FoodItem.update_forward_refs()

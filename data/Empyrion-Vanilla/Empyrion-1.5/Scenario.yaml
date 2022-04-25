@@ -2,3 +2,7 @@ name: Empyrion - Galactic Survival
 version: "1.5"
 scenario_type: Vanilla
 link: https://empyriongame.com
+
+harvest_products: ./Harvest-Products.yaml
+plant_sprouts: ./Plant-Sprouts.yaml
+food_items: ./Food-Items.yaml

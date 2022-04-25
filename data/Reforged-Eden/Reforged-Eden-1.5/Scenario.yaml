@@ -2,3 +2,7 @@ name: Reforged Eden
 version: "1.5"
 scenario_type: Mod
 link: https://steamcommunity.com/workshop/filedetails/?id=2550354956
+
+harvest_products: ./Harvest-Products.yaml
+plant_sprouts: ./Plant-Sprouts.yaml
+food_items: ./Food-Items.yaml
